@@ -1,0 +1,8 @@
+# 数据集路径定义
+path: /home/frxu/repo/wabco/dataset  # 数据集根目录
+train: images/train     # 训练集图像路径（相对path的路径）
+val: images/val         # 验证集图像路径
+
+# 类别配置
+nc: 1                  # 类别数量（此处为衬套检测，仅需1类）
+0: ['ROI']        # 类别名称列表（需与标注文件中的类别ID严格对应）
