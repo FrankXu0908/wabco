@@ -7,8 +7,6 @@ import torch
 
 # Load the YOLO model for object detection
 model = YOLO("runs/detect/train3/weights/best.pt")
-# Load the YOLO model for classification
-#classifier = YOLO("runs/classify/train/weights/best.pt")
 # Define the directory containing images for evaluation
 eval_img_dir = Path("images")
 
@@ -113,12 +111,14 @@ def detect_and_crop_images(img_path:str,
     for idx, box in enumerate(xyxy_sorted, start=1):
         x1, y1, x2, y2 = map(int, box)
         crop = image[y1:y2, x1:x2]
-        #save_path =  crop_dir / f"{img_name_without_ext}_{idx}.jpg"
-        #cv2.imwrite(save_path, crop)
+        save_path =  crop_dir / f"{img_name_without_ext}_{idx}.jpg"
+        cv2.imwrite(save_path, crop)
         crops.append(crop)
     return crops
 
 
+# Load the YOLO model for classification
+#classifier = YOLO("runs/classify/train/weights/best.pt")
 def classify_crops(crops: list, classifier, transform, class_labels=("OK", "NG")) -> list:
     """
     Given a list of cropped images, run classification and return a list of predicted labels.
@@ -138,4 +138,4 @@ def classify_crops(crops: list, classifier, transform, class_labels=("OK", "NG")
 
 
 crops = detect_and_crop_images("8331751694019_.pic_hd.jpg")
-print(f"Number of crops: {len(crops)}")
+print(f"Number of crops: {len(crops)}", crops)
