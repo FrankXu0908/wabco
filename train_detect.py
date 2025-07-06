@@ -1,6 +1,6 @@
 from ultralytics import YOLO
 
-model = YOLO("yolo_weights/yolov8m.pt")
+model = YOLO("weights/pretrained/yolov8m.pt")
 # Train the model on the own dataset for 50 epochs
 train_results = model.train(
     data="train.yaml",  # Path to dataset configuration file
