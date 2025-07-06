@@ -2,12 +2,14 @@ from PIL import Image
 import matplotlib.pyplot as plt
 from pathlib import Path
 import cv2
+import torchvision
 from ultralytics import YOLO
 import torch
+from torchvision import models, transforms
 
 class ObjectDetector:
     def __init__(self,
-                 yolo_weights_path="runs/detect/train3/weights/best.pt",
+                 yolo_weights_path="weights/detector/best.pt",
                  eval_img_dir=Path("images"),
                  result_dir=Path("results")):
         self.model = YOLO(yolo_weights_path)
@@ -42,3 +44,37 @@ class ObjectDetector:
             cv2.imwrite(save_path, crop)
             crops.append(crop)
         return crops
+
+class DefectClassifier:
+    """
+    Given a list of cropped images, run classification and return a dictionary of indices and predicted labels.
+    """
+    def __init__(self, model_path=None, num_classes=2, class_labels=("OK", "NG")):
+        self.device = "cpu"
+        self.class_labels = class_labels
+        self.transform = transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.Resize((240, 240)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                 std=[0.229, 0.224, 0.225])
+        ])
+        self.model = models.efficientnet_b1(weights=torchvision.models.EfficientNet_B1_Weights.DEFAULT)
+        self.model.classifier[1] = torch.nn.Linear(self.model.classifier[1].in_features, num_classes)
+        if model_path:
+            self.model.load_state_dict(torch.load(model_path, map_location='cpu'))
+        self.model.to(self.device)
+        self.model.eval()
+
+    def classify(self, crops: list) -> list:
+        results = []
+        with torch.inference_mode():
+            for idx, crop in enumerate(crops, start=1):
+                if crop is None or crop.size == 0:
+                    results.append("empty")
+                    continue
+                input_tensor = self.transform(crop).unsqueeze(0).to(self.device)
+                output = self.model(input_tensor)
+                pred = torch.argmax(output, dim=1).item()
+                results.append({idx: self.class_labels[pred]})
+        return results
