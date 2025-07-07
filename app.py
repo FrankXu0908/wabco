@@ -1,12 +1,15 @@
+import os
 from detector import ObjectDetector, DefectClassifier
-from pathlib import Path
-import cv2
-from ultralytics import YOLO
+#from pathlib import Path
+#import cv2
+#from ultralytics import YOLO
 import torch
-from torchvision import models, transforms
+#from torchvision import models, transforms
 import time
 
 def main():
+    num_cpu_threads = min(4, os.cpu_count() or 1)
+    torch.set_num_threads(num_cpu_threads)
     # Initialize the object detector
     detector = ObjectDetector()
     # Initialize the defect classifier

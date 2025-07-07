@@ -1,11 +1,13 @@
-from PIL import Image
-import matplotlib.pyplot as plt
+# from PIL import Image
+# import matplotlib.pyplot as plt
 from pathlib import Path
 import cv2
 import torchvision
 from ultralytics import YOLO
 import torch
 from torchvision import models, transforms
+import onnxruntime as ort
+import numpy as np
 
 class ObjectDetector:
     def __init__(self,
@@ -86,11 +88,9 @@ class DefectClassifier:
 
         # Fill out results in original order
         results = []
-        j = 0
         for i in range(len(crops)):
             if i in valid_indices:
-                results.append({i + 1: self.class_labels[preds[j]]})
-                j += 1
+                results.append({i + 1: self.class_labels[preds[i]]})
             else:
                 results.append({i + 1: "empty"})
         return results
