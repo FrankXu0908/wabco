@@ -49,10 +49,10 @@ class ObjectDetector:
 
 class DefectClassifier:
     """
-    Given a list of cropped images, run classification and return a dictionary of indices and predicted labels.
+    Given a list of cropped images, run classification using an ONNX model
+    and return a dictionary of indices and predicted labels.
     """
-    def __init__(self, model_path=None, num_classes=2, class_labels=("OK", "NG")):
-        self.device = torch.device("cpu")
+    def __init__(self, onnx_path="weights/classifier/efficientnet_b1.onnx", class_labels=("OK", "NG")):
         self.class_labels = class_labels
         self.transform = transforms.Compose([
             transforms.ToPILImage(),
@@ -61,12 +61,7 @@ class DefectClassifier:
             transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                  std=[0.229, 0.224, 0.225])
         ])
-        self.model = models.efficientnet_b1(weights=torchvision.models.EfficientNet_B1_Weights.DEFAULT)
-        self.model.classifier[1] = torch.nn.Linear(self.model.classifier[1].in_features, num_classes)
-        if model_path:
-            self.model.load_state_dict(torch.load(model_path, map_location='cpu'))
-        self.model.to(self.device)
-        self.model.eval()
+        self.session = ort.InferenceSession(onnx_path, providers=['CPUExecutionProvider'])
 
     def classify(self, crops: list) -> list:
         tensors = []
@@ -74,36 +69,24 @@ class DefectClassifier:
         for idx, crop in enumerate(crops):
             if crop is None or crop.size == 0:
                 continue
-            tensor = self.transform(crop)
+            tensor = self.transform(crop).unsqueeze(0).numpy()
             tensors.append(tensor)
             valid_indices.append(idx)
 
         if not tensors:
             return ["empty"] * len(crops)
 
-        batch = torch.stack(tensors).to(self.device)
-        with torch.inference_mode():
-            outputs = self.model(batch)
-            preds = torch.argmax(outputs, dim=1).tolist()
+        batch = np.vstack(tensors).astype(np.float32)
+        outputs = self.session.run(None, {"input": batch})
+        preds = np.argmax(outputs[0], axis=1)
 
         # Fill out results in original order
         results = []
+        j = 0
         for i in range(len(crops)):
             if i in valid_indices:
-                results.append({i + 1: self.class_labels[preds[i]]})
+                results.append({i + 1: self.class_labels[preds[j]]})
+                j += 1
             else:
                 results.append({i + 1: "empty"})
         return results
-
-    # def classify(self, crops: list) -> list:
-    #     results = []
-    #     with torch.inference_mode():
-    #         for idx, crop in enumerate(crops, start=1):
-    #             if crop is None or crop.size == 0:
-    #                 results.append("empty")
-    #                 continue
-    #             input_tensor = self.transform(crop).unsqueeze(0).to(self.device)
-    #             output = self.model(input_tensor)
-    #             pred = torch.argmax(output, dim=1).item()
-    #             results.append({idx: self.class_labels[pred]})
-    #     return results
