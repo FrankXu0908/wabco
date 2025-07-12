@@ -11,7 +11,7 @@ import numpy as np
 
 class ObjectDetector:
     def __init__(self,
-                 yolo_weights_path="weights/detector/best.pt",
+                 yolo_weights_path="weights/detector/detector_v1.pt",
                  eval_img_dir=Path("images"),
                  result_dir=Path("results")):
         self.model = YOLO(yolo_weights_path)
@@ -42,7 +42,7 @@ class ObjectDetector:
         for idx, box in enumerate(xyxy_sorted, start=1):
             x1, y1, x2, y2 = map(int, box)
             crop = image[y1:y2, x1:x2]
-            save_path =  self.crop_dir / f"{img_name_without_ext}_{idx}.jpg"
+            save_path =  self.crop_dir / f"{img_name_without_ext}_{idx}.bmp"
             cv2.imwrite(save_path, crop)
             crops.append(crop)
         return crops
@@ -52,11 +52,11 @@ class DefectClassifier:
     Given a list of cropped images, run classification using an ONNX model
     and return a dictionary of indices and predicted labels.
     """
-    def __init__(self, onnx_path="weights/classifier/efficientnet_b1.onnx", class_labels=("OK", "NG")):
+    def __init__(self, onnx_path="weights/biclassifier/efficientnet_b1_trained.onnx", class_labels=("NG","OK")):
         self.class_labels = class_labels
         self.transform = transforms.Compose([
             transforms.ToPILImage(),
-            transforms.Resize((240, 240)),
+            transforms.Resize((260, 260)),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                  std=[0.229, 0.224, 0.225])
@@ -90,3 +90,4 @@ class DefectClassifier:
             else:
                 results.append({i + 1: "empty"})
         return results
+

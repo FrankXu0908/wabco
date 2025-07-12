@@ -7,14 +7,20 @@ from pathlib import Path
 
 NUM_WORKERS = os.cpu_count()
 # Setup path to data folder
-data_path = Path("dataset/")
-image_path = data_path / "biclassifier"
+data_path = Path("dataset")
+image_path = data_path / "biclassifier_v1"
 train_dir = image_path / "train"
 test_dir = image_path / "test"
 
-data_transform = transforms.Compose([
-    transforms.Resize((240, 240)),
-    transforms.ToTensor()
+data_transform = transforms.Compose([   
+    transforms.Resize((260, 260)),
+    transforms.RandomHorizontalFlip(p=0.5),
+    transforms.RandomVerticalFlip(p=0.1),
+    transforms.RandomRotation(degrees=10),     # Small rotations simulate camera variability
+    transforms.ColorJitter(brightness=0.2, contrast=0.2),  # Simulates lighting changes
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406],       # ImageNet stats
+                         std=[0.229, 0.224, 0.225])
 ])
 train_dataloader, test_dataloader, class_names = data_setup.create_dataloaders(
                             train_dir=train_dir,
@@ -48,7 +54,7 @@ engine.train(model=model,
              test_dataloader=test_dataloader,
              optimizer=optimizer,
              loss_fn=loss_fn,
-             epochs=5,
+             epochs=200,
              device=device)
 
 # Save the trained model weights
@@ -57,7 +63,7 @@ torch.save(model.state_dict(), model_save_path)
 print(f"✅ Trained model saved to {model_save_path}")
 
 def export_onnx(model, save_path="weights/biclassifier/efficientnet_b1_trained.onnx"):
-    dummy_input = torch.randn(1, 3, 240, 240)
+    dummy_input = torch.randn(1, 3, 260, 260)
     model.eval()
     torch.onnx.export(
         model, dummy_input, save_path,

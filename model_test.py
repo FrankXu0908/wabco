@@ -15,7 +15,7 @@ def main():
     classifier = DefectClassifier()
     
     # Detect and crop images
-    img_path = "1771344.jpg"   #"8331751694019_.pic_hd.jpg" 
+    img_path = "image_20250711_ng1.bmp"  # "1771344.jpg" "8331751694019_.pic_hd.jpg"
     crops = detector.detect_and_crop_images(img_path)
 
     # Classify the cropped images

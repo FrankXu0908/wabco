@@ -199,7 +199,7 @@ class CameraManager:
 
         # 获取一张图像
         self.stOutFrame = MV_FRAME_OUT()
-        ret = self.cam.MV_CC_GetImageBuffer(self.stOutFrame, 300)
+        ret = self.cam.MV_CC_GetImageBuffer(self.stOutFrame, 50) # 300减少到50毫秒
 
         if ret != 0:
             print(f"获取图像失败! ret=[0x{ret:x}]")
@@ -355,7 +355,7 @@ class CameraManager:
     def capture_and_save(self, save_path):
         try:
             # 减少等待机械动作的时间
-            time.sleep(0.1)  # 从0.3减少到0.1
+            # time.sleep(0.1)  # 从0.3减少到0.1
             # 尝试获取图像
             data_buf = self.get_image()
             if data_buf is not None:
