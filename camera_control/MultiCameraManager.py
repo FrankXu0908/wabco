@@ -1,3 +1,4 @@
+import logging
 from MvCameraControl_class import *
 from CameraParams_header import *
 from ctypes import *
@@ -6,11 +7,9 @@ import cv2
 import numpy as np
 import os
 from datetime import datetime
-import nidaqmx
 import signal
 import sys
-from nidaqmx.constants import LineGrouping
-
+from siemens_s7_1200_client import SiemensS71200Client
 
 class MultiCameraManager:
     def __init__(self):
@@ -18,46 +17,38 @@ class MultiCameraManager:
         self.data_bufs = {}  # 每个相机的数据缓存
         self.stOutFrames = {}  # 每个相机的输出帧
         self.running = True
-        
-        # NI设备配置
-        self.ni_device = "Dev1"
-        self.ni_channels = {
-            "camera1": {
-                "channels": {
-                    "line0": {"channel": "port1/line0", "save_path": "photo"},
-                    "line1": {"channel": "port1/line1", "save_path": "photo2"}
-                },
-                "camera_sn": "DA5715074",
-                "params": {
-                    "photo": {
-                        "exposure": 3000.0,
-                        "offset_y": 824,
-                        "process": "right_half"
-                    },
-                    "photo2": {
-                        "exposure": 1500.0,
-                        "offset_y": 1024,
-                        "process": "middle"
-                    }
-                }
-            },
-            "camera2": {
-                "channels": {
-                    "line2": {"channel": "port1/line2", "save_path": "photo_m254"}
-                },
-                "camera_sn": "DA5715105",
-                "params": {
-                    "photo_m254": {
-                        "exposure": 4500.0,
+        # 相机配置
+        self.config = {
+                0: {
+                    "name": "Camera 1",
+                    "channels": 0,
+                    "camera_sn": "DA6426319",
+                    "params": {
+                        "exposure": 2000.0,
+                        "gain_value": 0,
                         "offset_y": 0,
-                        "process": "split_quarters"
+                        "process": "left",
+                        "width": 2448,
+                        "height":2048,  
+                        }
+                    },
+                1: {
+                    "name": "Camera 2",
+                    "channels": 1 ,
+                    "camera_sn": "DA6426332",
+                    "params": {
+                            "exposure": 2000.0,
+                            "gain_value": 0,
+                            "offset_y": 0,
+                            "process": "right",  
+                            "width": 2448,
+                            "height":2048,  
                     }
                 }
             }
-        }
-        
+        self.logger = logging.getLogger("MultiCameraManager")
         self.last_signal_states = {}
-        for cam_id, cam_config in self.ni_channels.items():
+        for cam_id, cam_config in self.config.items():
             for line_id in cam_config["channels"].keys():
                 self.last_signal_states[f"{cam_id}_{line_id}"] = False
         
@@ -133,45 +124,115 @@ class MultiCameraManager:
             cam.MV_CC_CloseDevice()
             cam.MV_CC_DestroyHandle()
             return None
-
+        
         return cam
 
     def configure_camera(self, cam, config):
         """配置相机参数"""
         # 设置触发模式
-        cam.MV_CC_SetEnumValue("TriggerMode", MV_TRIGGER_MODE_ON)
-        cam.MV_CC_SetEnumValue("TriggerSource", MV_TRIGGER_SOURCE_SOFTWARE)
+        ret = cam.MV_CC_SetEnumValue("TriggerMode", MV_TRIGGER_MODE_ON)
+        if ret != 0:
+            print(f"设置触发模式失败! ret=[0x{ret:x}]")
+            cam.MV_CC_CloseDevice()
+            cam.MV_CC_DestroyHandle()
+            return None
+        print("设置连续模式成功")
+        # 设置触发源
+        ret = cam.MV_CC_SetEnumValue("TriggerSource", MV_TRIGGER_SOURCE_SOFTWARE)
+        if ret != 0:
+            print(f"设置触发源失败! ret=[0x{ret:x}]")
+            cam.MV_CC_CloseDevice()
+            cam.MV_CC_DestroyHandle()
+            return None
+        print("设置触发源成功")
         
+        # 配置输出通道（Line1）为触发模式
+        ret = cam.MV_CC_SetEnumValue("LineSelector", 1)  # 选择Line1 1 = "Line1"
+        if ret != 0:
+            print(f"设置LineSelector失败! ret=[0x{ret:x}]")
+        else:
+            print("设置LineSelector成功")
+
+        ret = cam.MV_CC_SetEnumValue("LineMode", 8 )  # 设为Strboe模式 8 = "Strobe"
+        if ret != 0:
+            print(f"设置LineMode失败! ret=[0x{ret:x}]")
+        else:
+            print("设置LineMode成功")
+        ret = cam.MV_CC_SetEnumValue("LineSource", 0)  # 曝光开始时输出信号 0 ="ExposureStart"
+        if ret != 0:
+            print(f"设置LineSource失败! ret=[0x{ret:x}]")
+        else:
+            print("设置LineSource成功")
+
         # 关闭自动曝光
-        cam.MV_CC_SetEnumValue("ExposureAuto", 0)
-        
+        ret = cam.MV_CC_SetEnumValue("ExposureAuto", 0)
+        if ret != 0:
+            print(f"设置自动曝光模式失败! ret=[0x{ret:x}]")
+        else:
+            print("关闭自动曝光成功")
+
         # 设置曝光时间
-        cam.MV_CC_SetFloatValue("ExposureTime", config["exposure"])
-        
+        exposure_time = config["params"]["exposure"]
+        ret = cam.MV_CC_SetFloatValue("ExposureTime", exposure_time)
+        if ret != 0:
+            print(f"设置曝光时间失败! ret=[0x{ret:x}]")
+        else:
+            print(f"设置曝光时间为 {exposure_time} 微秒")
+
         # 设置增益
-        cam.MV_CC_SetFloatValue("Gain", 0)
+        gain_value = config["params"]["gain_value"]  # 适当增加增益
+        ret = cam.MV_CC_SetFloatValue("Gain", gain_value)
+        if ret != 0:
+            print(f"设置增益失败! ret=[0x{ret:x}]")
+        else:
+            print(f"设置增益为 {gain_value}")
         
         # 设置图像格式
-        cam.MV_CC_SetEnumValue("PixelFormat", PixelType_Gvsp_Mono8)
+        ret = cam.MV_CC_SetEnumValue("PixelFormat", PixelType_Gvsp_Mono8)
+        if ret != 0:
+            print(f"设置图像格式失败! ret=[0x{ret:x}]")
+        else:
+            print("设置图像格式成功")
         
         # 设置图像分辨率和偏移
-        cam.MV_CC_SetIntValue("Width", config["width"])
-        cam.MV_CC_SetIntValue("Height", config["height"])
-        cam.MV_CC_SetIntValue("OffsetY", config["offset_y"])
+        ret = cam.MV_CC_SetIntValue("Width", config["width"])
+        if ret != 0:
+            print(f"设置图像宽度失败! ret=[0x{ret:x}]")
+        else:
+            print("设置图像宽度成功")
+        ret = cam.MV_CC_SetIntValue("Height", config["height"])
+        if ret != 0:
+            print(f"设置图像高度失败! ret=[0x{ret:x}]")
+        else:
+            print("设置图像高度成功")
+        ret = cam.MV_CC_SetIntValue("OffsetY", config["offset_y"])
+        if ret != 0:
+            print(f"设置Y偏移失败! ret=[0x{ret:x}]")
+        else:
+            print("设置Y偏移成功")
         
         # 设置传输参数
-        cam.MV_CC_SetIntValue("GevSCPSPacketSize", 1500)
-        cam.MV_CC_SetIntValue("GevSCPD", 50000)
+        ret = cam.MV_CC_SetIntValue("GevSCPSPacketSize", 1500)
+        if ret != 0:
+            print(f"设置数据包大小失败! ret=[0x{ret:x}]")
+        else:
+            print("设置数据包大小成功")
+
+        ret = cam.MV_CC_SetIntValue("GevSCPD", 25000) # 从50000减少到25000
+        if ret != 0:
+            print(f"设置数据包间隔失败! ret=[0x{ret:x}]")
+        else:
+            print("设置数据包间隔成功")
 
     def initialize_all_cameras(self):
         """初始化所有相机"""
-        for camera_id, config in self.ni_channels.items():
+        for camera_id, config in self.config.items():
             cam = self.initialize_camera(camera_id, config)
             if cam is not None:
                 self.cameras[camera_id] = cam
-                print(f"相机 {camera_id} ({config['camera_sn']}) 初始化成功")
+                logging.info(f"相机 {camera_id} ({config['camera_sn']}) 初始化成功")
             else:
-                print(f"相机 {camera_id} ({config['camera_sn']}) 初始化失败")
+                logging.error(f"相机 {camera_id} ({config['camera_sn']}) 初始化失败")
 
     def get_image(self, camera_id):
         """获取指定相机的图像"""
@@ -191,30 +252,24 @@ class MultiCameraManager:
                 time.sleep(0.3)
 
                 # 获取图像
-                stOutFrame = MV_FRAME_OUT()
-                ret = cam.MV_CC_GetImageBuffer(stOutFrame, 10000)
+                self.stOutFrames[camera_id] = MV_FRAME_OUT()
+                ret = cam.MV_CC_GetImageBuffer(self.stOutFrames[camera_id], 10000)
                 if ret != 0:
                     continue
 
                 # 复制图像数据
-                nPayloadSize = stOutFrame.stFrameInfo.nFrameLen
-                pData = stOutFrame.pBufAddr
+                nPayloadSize = self.stOutFrames[camera_id].stFrameInfo.nFrameLen
+                pData = self.stOutFrames[camera_id].pBufAddr
                 data_buf = (c_ubyte * nPayloadSize)()
                 cdll.msvcrt.memcpy(byref(data_buf), pData, nPayloadSize)
 
                 # 释放缓存
-                cam.MV_CC_FreeImageBuffer(stOutFrame)
+                cam.MV_CC_FreeImageBuffer(self.stOutFrames[camera_id])
                 
                 return data_buf
             except Exception as e:
                 print(f"获取图像时发生异常: {str(e)}")
                 time.sleep(0.3)
-            finally:
-                if 'stOutFrame' in locals():
-                    try:
-                        cam.MV_CC_FreeImageBuffer(stOutFrame)
-                    except:
-                        pass
 
         return None
 
@@ -276,49 +331,25 @@ class MultiCameraManager:
         except Exception as e:
             print(f"拍照保存时发生错误: {str(e)}")
 
-    def monitor_and_capture(self):
-        """监控信号并触发拍照"""
-        try:
-            tasks = {}
-            # 为每个通道创建任务
-            for camera_id, config in self.ni_channels.items():
-                for line_id, line_config in config["channels"].items():
-                    channel_str = f"{self.ni_device}/{line_config['channel']}"
-                    task = nidaqmx.Task()
-                    task.di_channels.add_di_chan(channel_str,
-                                               line_grouping=LineGrouping.CHAN_PER_LINE)
-                    task.start()
-                    tasks[f"{camera_id}_{line_id}"] = task
+    # def monitor_and_capture(self):
+    #     """监控信号并触发拍照"""
+    #     while self.running:
+    #         try: 
+                    
+    #                 # 检测下降沿
+    #                 if self.last_signal_states[f"{camera_id}_{line_id}"] and not current_state:
+    #                     print(f"检测到{camera_id}_{line_id}下降沿触发信号，开始拍照...")
+    #                     config = self.ni_channels[camera_id]["params"][line_id]
+    #                     self.capture_and_save(
+    #                         camera_id,
+    #                         config["save_path"],
+    #                         config["process"] == "split_quarters"
+    #                     )
 
-            while self.running:
-                try:
-                    for task_id, task in tasks.items():
-                        camera_id, line_id = task_id.split("_")
-                        current_state = bool(task.read())
+    #                 self.last_signal_states[f"{camera_id}_{line_id}"] = current_state
+    #             time.sleep(0.001)
+    #             continue
 
-                        # 检测下降沿
-                        if self.last_signal_states[f"{camera_id}_{line_id}"] and not current_state:
-                            print(f"检测到{camera_id}_{line_id}下降沿触发信号，开始拍照...")
-                            config = self.ni_channels[camera_id]["params"][line_id]
-                            self.capture_and_save(
-                                camera_id,
-                                config["save_path"],
-                                config["process"] == "split_quarters"
-                            )
-
-                        self.last_signal_states[f"{camera_id}_{line_id}"] = current_state
-                    time.sleep(0.001)
-                except Exception as e:
-                    print(f"读取错误: {str(e)}")
-                    time.sleep(0.1)
-                    continue
-
-            # 清理任务
-            for task in tasks.values():
-                task.close()
-
-        except Exception as e:
-            print(f"任务创建错误: {str(e)}")
 
     def signal_handler(self, signum, frame):
         """处理退出信号"""
@@ -347,7 +378,34 @@ class MultiCameraManager:
         if callback in self.signal_callbacks:
             self.signal_callbacks.remove(callback)
 
+    def capture_and_return(self,camera_id):
+        """拍照并返回"""
+        try:
+            time.sleep(0.1) 
+            # 尝试获取图像
+            self.data_bufs[camera_id] = self.get_image(camera_id)
+            if self.data_bufs[camera_id] is not None:
+                try:
+                    # 处理图像数据
+                    temp = np.frombuffer(self.data_bufs[camera_id], dtype=np.uint8)
+                    if len(temp) > 0:
+                        width = self.stOutFrames[camera_id].stFrameInfo.nWidth   # 2448
+                        height = self.stOutFrames[camera_id].stFrameInfo.nHeight # 2048
+                        temp = temp.reshape((height, width))
 
+                    #     # 计算中心点
+                    #     center_y = height // 2  # 1024
+                    #     # 只保留下半部分（从中心点到底部）
+                    #     temp = temp[center_y:, :]  # 修改这里，保留所有列（宽度），只取下半部分高度
+                        # 返回处理后的图像数据
+                        return temp
+
+                except Exception as e:
+                    print(f"处理和保存图像时发生错误: {str(e)}")
+
+        except Exception as e:
+            print(f"拍照过程中发生错误: {str(e)}")
+            
 def main():
     manager = MultiCameraManager()
     

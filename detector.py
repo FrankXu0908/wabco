@@ -8,6 +8,7 @@ import torch
 from torchvision import models, transforms
 import onnxruntime as ort
 import numpy as np
+import time
 
 class ObjectDetector:
     def __init__(self,
@@ -63,18 +64,13 @@ class DefectClassifier:
         ])
         self.session = ort.InferenceSession(onnx_path, providers=['CPUExecutionProvider'])
 
-    def classify(self, crops: list) -> list:
+    def classify(self, crops: list, camera_id) -> list:
         tensors = []
-        valid_indices = []
-        for idx, crop in enumerate(crops):
+        for crop in crops:
             if crop is None or crop.size == 0:
                 continue
             tensor = self.transform(crop).unsqueeze(0).numpy()
             tensors.append(tensor)
-            valid_indices.append(idx)
-
-        if not tensors:
-            return ["empty"] * len(crops)
 
         batch = np.vstack(tensors).astype(np.float32)
         outputs = self.session.run(None, {"input": batch})
@@ -82,12 +78,23 @@ class DefectClassifier:
 
         # Fill out results in original order
         results = []
-        j = 0
         for i in range(len(crops)):
-            if i in valid_indices:
-                results.append({i + 1: self.class_labels[preds[j]]})
-                j += 1
-            else:
-                results.append({i + 1: "empty"})
-        return results
+            results.append({i + 1: self.class_labels[preds[i]]})
 
+        # save each crop with its prediction
+        result_path = Path("results")    
+        result_ok = result_path / "OK"
+        result_ng = result_path / "NG"
+        result_path.mkdir(exist_ok=True)
+        result_ok.mkdir(exist_ok=True)
+        result_ng.mkdir(exist_ok=True)
+        
+        timestamp = time.strftime('%Y%m%d_%H%M%S')
+        for idx, crop in enumerate(crops):
+            if crop is not None:
+                if preds[idx] == 0:
+                    save_path = result_ng / f"cam{camera_id}_{idx + 1}_NG_{timestamp}.jpg"
+                else:
+                    save_path = result_ok / f"cam{camera_id}_{idx + 1}_OK_{timestamp}.jpg"
+                cv2.imwrite(str(save_path), crop)
+        return results, preds

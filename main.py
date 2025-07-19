@@ -1,34 +1,34 @@
-from camera_control.CameraDriver import CameraManager
-from detector import ObjectDetector, DefectClassifier
+from camera_control.MultiCameraManager import MultiCameraManager
 import signal
 import threading
 import time
 import snap7
 import logging
 import queue
-from queue import Queue
+from queue import Empty, Queue
 import cv2
 from datetime import datetime
 import gradio as gr
-import os
-import onnxruntime as ort
-import torch
+import snap7
 from snap7.util import get_bool, set_bool
-
+from siemens_s7_1200_client import SiemensS71200Client
+from detector import ObjectDetector, DefectClassifier
 
 class CameraThread(threading.Thread):
 
-    def __init__(self, log_queue, trigger_event, stop_event, frame_queue):
+    def __init__(self, trigger_event, stop_event):
         super().__init__()
-        self.log_queue = log_queue  # 用于传递日志到主线程
+        self.log_queue = Queue()  # 用于传递日志到主线程
+        self.image_queue = Queue()  # 用于传递图像数据
         self.trigger_event = trigger_event  # PLC触发事件
         self.stop_event = stop_event  # 停止线程事件
         self.camera = None             # 相机管理器
-        self.frame_queue = frame_queue  # 结果队列
         self.last_capture_time = None
         self.plc = None                     # PLC 客户端
-        self.plc_ip = "192.168.0.1"         # PLC IP 地址
-        self.plc_db = 1                     # PLC 数据块编号
+        self.plc_ip = "192.168.3.100"      # PLC的IP地址
+        self.plc_db = 79                     # PLC 数据块编号
+        self.plc_rack = 0  # PLC的机架号
+        self.plc_slot = 1  # PLC的槽位号
         self.setup_logger()
 
 
@@ -42,38 +42,6 @@ class CameraThread(threading.Thread):
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         queue_handler.setFormatter(formatter)
         self.logger.addHandler(queue_handler)
-
-    def connect_plc(self):
-        """连接 PLC"""
-        try:
-            self.plc = snap7.client.Client()
-            self.plc.connect(self.plc_ip, 0, 1)  # 参数: IP, 机架号, 槽号
-            self.logger.info("PLC 连接成功")
-            return True
-        except Exception as e:
-            self.logger.error(f"PLC 连接失败: {e}")
-            return False
-        
-    def read_plc_trigger(self):
-        """读取 PLC 触发信号 (DB1.DBX0.0)"""
-        try:
-            data = self.plc.db_read(self.plc_db, 0, 1)  # 读取 DB1.DBB0
-            trigger_bit = get_bool(data, 0, 0)          # 解析 DB1.DBX0.0
-            return trigger_bit
-        except Exception as e:
-            self.logger.error(f"读取 PLC 触发信号失败: {e}")
-            return False    
-
-    def reset_plc_trigger(self):
-        """复位 PLC 触发信号 (DB1.DBX0.0)"""
-        try:
-            data = self.plc.db_read(self.plc_db, 0, 1)
-            set_bool(data, 0, 0, False)  # 将 DB1.DBX0.0 设为 False
-            self.plc.db_write(self.plc_db, 0, data)
-        except Exception as e:
-            self.logger.error(f"复位 PLC 触发信号失败: {e}")
-
-    def write_plc_results(self, results):
         """将拍照结果写入 PLC (DB1.DBB4-DBB6)"""
         try:
             # 将结果转换为字节 (示例: OK=1, NG=0)
@@ -87,79 +55,64 @@ class CameraThread(threading.Thread):
         except Exception as e:
             self.logger.error(f"写入 PLC 结果失败: {e}")
 
+    def handle_trigger(self, trigger_info):
+        """Callback when PLC trigger is detected"""
+        left, right, side = trigger_info
+        if left:
+            camera_id = 0
+            frames = self.camera.capture_and_return(camera_id)
+            self.image_queue.put((camera_id, frames))  # 将图像数据放入队列
+        elif right:
+            camera_id = 1
+            frames = self.camera.capture_and_return(camera_id)
+            self.image_queue.put((camera_id, frames))  # 将图像数据放入队列
+        elif side:
+            camera_id = 2
+            frames = self.camera.capture_and_return(camera_id)
+            self.image_queue.put((camera_id, frames))  # 将图像数据放入队列
+
+    def send_results(self, preds):
+        # 将结果写入PLC (示例: DB1.DBB4-DBB6)
+        result_bytes = bytearray([preds[0], preds[1], preds[2], preds[3], preds[4], preds[5]])
+        self.plc.write_data_block(self.plc_db, 4, result_bytes)
+
     def run(self):
         self.logger.info("准备启动相机线程")
         try:
-            # 1. 初始化相机  
-            self.camera = CameraManager() 
+            # 1. 获取相机实例并且初始化
+            self.camera = MultiCameraManager() 
             self.logger.info("获取相机实例")
-            if self.camera.data_camera() is None:
-                self.logger.error("相机初始化失败")
-                return
-            else:
-                self.logger.info(f"当前相机链接状态:{self.camera.device_status}")
-            # 2. 连接 PLC
-            if not self.connect_plc():
+            self.camera.initialize_all_cameras()
+            # 2. 连接 PLC并开始监测，返回画框到照片队列
+            self.plc = SiemensS71200Client(self.plc_ip, self.plc_rack, self.plc_slot)
+            if not self.plc.connect_to_plc():
                 self.logger.info("PLC连接失败")
                 return
-            # 3. 主循环：监测 PLC 触发信号
+            self.plc.register_callback(self.handle_trigger)
+            monitor_and_capture_thread = threading.Thread(target=self.plc.start_monitoring, kwargs={'interval': 0.3})
+            monitor_and_capture_thread.start()
+            # Main loop to process frames
+            self.classifier = DefectClassifier()  # 初始化分类器
             while not self.stop_event.is_set():
                 try:
-                    # 检查 PLC 触发信号
-                    if self.read_plc_trigger():
-                        self.logger.info("检测到 PLC 触发信号")
-                        self.reset_plc_trigger()  # 复位触发位
-                        frame = self.camera.capture_and_save()  # 获取当前图像帧
-                        if frame is not None:
-                            self.frame_queue.put(frame)
-                            self.logger.info("已将图像放入结果队列供分类线程使用")
-                    time.sleep(0.1)  # 100ms 轮询间隔
-                except Exception as e:
-                    self.logger.error(f"主循环异常: {e}")
-                    time.sleep(1)             
+                    camera_id, frames = self.image_queue.get(timeout=0.5)
+                    if frames is not None:
+                        results, preds = self.classifier.classify(frames, camera_id)
+                        self.logger.info(f"相机 {camera_id} 识别结果: {results}")
+                        self.send_results(preds)
+                except Empty:
+                    continue
+                time.sleep(0.5)
+            self.plc.stop_monitoring()
+            monitor_and_capture_thread.join(timeout=2.0)
         except Exception as e:
             self.logger.error(f"相机线程异常: {str(e)}")
         finally:
-            if self.camera and self.camera.device_status:
-                self.camera.off_camera()
+            if self.camera:
+                self.camera.close_all_cameras()
             self.logger.info("相机线程停止")
 
-class ClassifierThread(threading.Thread):
-    def __init__(self, frame_queue, camera_thread, stop_event, log_queue):
-        super().__init__()
-        self.frame_queue = frame_queue
-        self.camera_thread = camera_thread
-        self.stop_event = stop_event
-        self.log_queue = log_queue
-        self.detector = ObjectDetector()
-        self.classifier = DefectClassifier()
-        self.logger = logging.getLogger('classifier_thread')
-        queue_handler = QueueHandler(self.log_queue)
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-        queue_handler.setFormatter(formatter)
-        self.logger.addHandler(queue_handler)
-        self.logger.setLevel(logging.INFO)
-    def run(self):
-        self.logger.info("分类线程已启动")
-        while not self.stop_event.is_set():
-            if not self.frame_queue.empty():
-                frame = self.frame_queue.get()
-                temp_path = "temp_frame.jpg"
-                cv2.imwrite(temp_path, frame)
-                try:
-                    crops = self.detector.detect_and_crop_images(frame)
-                    predictions = self.classifier.classify(crops)
-                    self.logger.info(f"识别结果: {predictions}")
-                    plc_results = {}
-                    for pred in predictions:
-                        for idx, label in pred.items():
-                            plc_results[f"position{idx}"] = label
-                    self.camera_thread.write_plc_results(plc_results)
-                except Exception as e:
-                    self.logger.error(f"分类处理异常: {e}")
-            time.sleep(0.1)
-
-def create_gradio_interface(log_queue, frame_queue):
+def create_gradio_interface(log_queue):
     with gr.Blocks(title="PLC相机控制系统") as demo:
         # 状态显示区域
         with gr.Row():
@@ -211,31 +164,22 @@ class QueueHandler(logging.Handler):
 
 
 def main():
-    # 创建线程间通信组件
-    log_queue = Queue()
-    frame_queue = Queue()
-    # Set max CPU threads globally for PyTorch
-    num_cpu_threads = min(4, os.cpu_count() or 1)
-    torch.set_num_threads(num_cpu_threads)
-    # ✅ ONNX Runtime session option setup
-    sess_options = ort.SessionOptions() 
-    sess_options.intra_op_num_threads = num_cpu_threads
     # ✅ 主线程初始化 logging（影响整个进程）
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(threadName)s] %(levelname)s: %(message)s",
         handlers=[logging.StreamHandler()]  # 输出到控制台
     )
-
+    # 创建线程间通信组件
     trigger_event = threading.Event()
     stop_event = threading.Event()
     
     # 创建相机线程
-    camera_thread = CameraThread(log_queue, trigger_event, stop_event)
+    camera_thread = CameraThread(trigger_event, stop_event)
     
     # 创建Gradio界面
-    #demo = create_gradio_interface(log_queue, result_queue)
-
+    #demo = create_gradio_interface(log_queue)
+    
     # 启动线程
     camera_thread.start()
     
@@ -247,7 +191,10 @@ def main():
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
+        stop_event.set()
         camera_thread.join(timeout=2.0)
+        if camera_thread.is_alive():
+            logging.warning("警告: 相机线程未及时停止！")
         logging.info("主线程退出")
 
 
