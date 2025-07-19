@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import logging
 from MvCameraControl_class import *
 from CameraParams_header import *
@@ -48,9 +51,8 @@ class MultiCameraManager:
             }
         self.logger = logging.getLogger("MultiCameraManager")
         self.last_signal_states = {}
-        for cam_id, cam_config in self.config.items():
-            for line_id in cam_config["channels"].keys():
-                self.last_signal_states[f"{cam_id}_{line_id}"] = False
+        for cam_id in self.config.keys():
+                self.last_signal_states[f"{cam_id}"] = False
         
         self.signal_callbacks = []
 
@@ -195,17 +197,17 @@ class MultiCameraManager:
             print("设置图像格式成功")
         
         # 设置图像分辨率和偏移
-        ret = cam.MV_CC_SetIntValue("Width", config["width"])
+        ret = cam.MV_CC_SetIntValue("Width", config["params"]["width"])
         if ret != 0:
             print(f"设置图像宽度失败! ret=[0x{ret:x}]")
         else:
             print("设置图像宽度成功")
-        ret = cam.MV_CC_SetIntValue("Height", config["height"])
+        ret = cam.MV_CC_SetIntValue("Height", config["params"]["height"])
         if ret != 0:
             print(f"设置图像高度失败! ret=[0x{ret:x}]")
         else:
             print("设置图像高度成功")
-        ret = cam.MV_CC_SetIntValue("OffsetY", config["offset_y"])
+        ret = cam.MV_CC_SetIntValue("OffsetY", config["params"]["offset_y"])
         if ret != 0:
             print(f"设置Y偏移失败! ret=[0x{ret:x}]")
         else:
@@ -230,9 +232,9 @@ class MultiCameraManager:
             cam = self.initialize_camera(camera_id, config)
             if cam is not None:
                 self.cameras[camera_id] = cam
-                logging.info(f"相机 {camera_id} ({config['camera_sn']}) 初始化成功")
+                self.logger.info(f"相机 {camera_id} ({config['camera_sn']}) 初始化成功")
             else:
-                logging.error(f"相机 {camera_id} ({config['camera_sn']}) 初始化失败")
+                self.logger.error(f"相机 {camera_id} ({config['camera_sn']}) 初始化失败")
 
     def get_image(self, camera_id):
         """获取指定相机的图像"""
@@ -398,7 +400,8 @@ class MultiCameraManager:
                     #     # 只保留下半部分（从中心点到底部）
                     #     temp = temp[center_y:, :]  # 修改这里，保留所有列（宽度），只取下半部分高度
                         # 返回处理后的图像数据
-                        return temp
+                        crops = [temp for _ in range(6)]
+                        return crops
 
                 except Exception as e:
                     print(f"处理和保存图像时发生错误: {str(e)}")
@@ -414,9 +417,13 @@ def main():
     
     # 初始化所有相机
     manager.initialize_all_cameras()
-    
-    # 开始监控和拍照
-    manager.monitor_and_capture()
+
+    time.sleep(2)
+
+    # 关闭所有相机   
+    manager.close_all_cameras()
+    # # 开始监控和拍照
+    # manager.monitor_and_capture()
 
 
 if __name__ == "__main__":

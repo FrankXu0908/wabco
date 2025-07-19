@@ -9,6 +9,7 @@ from torchvision import models, transforms
 import onnxruntime as ort
 import numpy as np
 import time
+import logging
 
 class ObjectDetector:
     def __init__(self,
@@ -21,6 +22,8 @@ class ObjectDetector:
         self.result_dir.mkdir(exist_ok=True)
         self.crop_dir = self.result_dir / "crops"
         self.crop_dir.mkdir(exist_ok=True)
+        self.logger = logging.getLogger(self.__class__.__name__)
+        
     def detect_and_crop_images(self, img_path: str) -> list:
         eval_img_path = self.eval_img_dir / img_path
         if not eval_img_path.exists():
@@ -57,6 +60,7 @@ class DefectClassifier:
         self.class_labels = class_labels
         self.transform = transforms.Compose([
             transforms.ToPILImage(),
+            transforms.Lambda(lambda img: img.convert("RGB")),  # Convert grayscale to RGB
             transforms.Resize((260, 260)),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406],
@@ -66,6 +70,7 @@ class DefectClassifier:
 
     def classify(self, crops: list, camera_id) -> list:
         tensors = []
+        print(f"Classifying {len(crops)} crops for camera {camera_id}")
         for crop in crops:
             if crop is None or crop.size == 0:
                 continue
