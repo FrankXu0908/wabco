@@ -10,10 +10,11 @@ import onnxruntime as ort
 import numpy as np
 import time
 import logging
+from datetime import datetime
 
-class ObjectDetector:
+class ObjectDetector_path:
     def __init__(self,
-                 yolo_weights_path="weights/detector/detector_v1.pt",
+                 yolo_weights_path="weights/detector/detector_yolo8n.pt",
                  eval_img_dir=Path("images"),
                  result_dir=Path("results")):
         self.model = YOLO(yolo_weights_path)
@@ -29,7 +30,7 @@ class ObjectDetector:
         if not eval_img_path.exists():
             raise FileNotFoundError(f"Image path {eval_img_path} does not exist.")
         img_name_without_ext = eval_img_path.stem
-        results = self.model.predict(eval_img_path, save=True, project=self.result_dir, exist_ok=True,conf=0.4)[0]
+        results = self.model.predict(eval_img_path, save=True, project=self.result_dir, exist_ok=True,conf=0.5)[0]
         boxes = results.boxes
         image = cv2.imread(str(eval_img_path))
         h, w = image.shape[:2]
@@ -47,10 +48,46 @@ class ObjectDetector:
             x1, y1, x2, y2 = map(int, box)
             crop = image[y1:y2, x1:x2]
             save_path =  self.crop_dir / f"{img_name_without_ext}_{idx}.bmp"
-            cv2.imwrite(save_path, crop)
+            cv2.imwrite(str(save_path), crop)
             crops.append(crop)
         return crops
 
+class ObjectDetector_frame:
+    def __init__(self,
+                 yolo_weights_path="weights/detector/detector_yolo8n.pt",
+                 result_dir=Path("results")):
+        self.model = YOLO(yolo_weights_path)
+        self.result_dir = result_dir
+        self.result_dir.mkdir(exist_ok=True)
+        self.crop_dir = self.result_dir / "crops"
+        self.crop_dir.mkdir(exist_ok=True)
+        self.logger = logging.getLogger(self.__class__.__name__)
+        
+    def detect_and_crop_images(self, img_frame: np.ndarray, camera_id:int, time:str) -> list:
+        frame = img_frame
+        print(frame)
+        results = self.model.predict(frame, save=True, project=self.result_dir, exist_ok=True,conf=0.5)[0]
+        print(results)
+        boxes = results.boxes
+        h, w = frame.shape[:2]
+        if len(boxes) != 6:
+            print(f"⚠️ Warning: Detected {len(boxes)} boxes (expecting 6)")
+            # Handle the case where less than 6 boxes are detected
+            # This part can be customized based on your specific requirements
+        xyxy_list = [box.xyxy[0].cpu().numpy() for box in boxes]
+        if w >= h:
+            xyxy_sorted = sorted(xyxy_list, key=lambda b: b[0])
+        else:
+            xyxy_sorted = sorted(xyxy_list, key=lambda b: b[1])
+        crops = []
+        for idx, box in enumerate(xyxy_sorted, start=1):
+            x1, y1, x2, y2 = map(int, box)
+            crop = frame[y1:y2, x1:x2]
+            save_path =  self.crop_dir / f"cam{camera_id}_{time}_{idx}.bmp"
+            cv2.imwrite(save_path, crop)
+            crops.append(crop)
+        return crops
+    
 class DefectClassifier:
     """
     Given a list of cropped images, run classification using an ONNX model
@@ -68,7 +105,7 @@ class DefectClassifier:
         ])
         self.session = ort.InferenceSession(onnx_path, providers=['CPUExecutionProvider'])
 
-    def classify(self, crops: list, camera_id) -> list:
+    def classify(self, crops: list, camera_id, time: str) -> list:
         tensors = []
         print(f"Classifying {len(crops)} crops for camera {camera_id}")
         for crop in crops:

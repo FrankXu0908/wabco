@@ -11,8 +11,9 @@ from datetime import datetime
 import gradio as gr
 import snap7
 from snap7.util import get_bool, set_bool
+from pathlib import Path
 from camera_control.siemens_s7_1200_client import SiemensS71200Client
-from detector import ObjectDetector, DefectClassifier
+from detector import ObjectDetector_frame, DefectClassifier
 from logging.handlers import QueueHandler, QueueListener
 
 class CameraThread(threading.Thread):
@@ -31,6 +32,7 @@ class CameraThread(threading.Thread):
         self.plc_db = 79                     # PLC 数据块编号
         self.plc_rack = 0  # PLC的机架号
         self.plc_slot = 1  # PLC的槽位号
+        self.save_dir = Path("./images")
         self.logger = logging.getLogger(self.__class__.__name__)
         # self.setup_logger()
 
@@ -88,13 +90,17 @@ class CameraThread(threading.Thread):
             monitor_and_capture_thread = threading.Thread(target=self.plc.start_monitoring, kwargs={'interval': 1}, daemon=True)
             monitor_and_capture_thread.start()
             # Main loop to process frames
+            self.detector = ObjectDetector_frame()
             self.classifier = DefectClassifier()  # 初始化分类器
             while not self.stop_event.is_set():     
                 try:
                     camera_id, frames = self.image_queue.get(timeout=0.5)
                     self.last_capture_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    image_save_path = self.save_dir/f"cam{camera_id}_{self.last_capture_time}.bmp"
+                    cv2.imwrite(str(image_save_path), frames)
                     if frames is not None:
-                        results, preds = self.classifier.classify(frames, camera_id)
+                        crops = self.detector.detect_and_crop_images(frames,camera_id,self.last_capture_time)
+                        results, preds = self.classifier.classify(crops,camera_id,self.last_capture_time)
                         self.logger.info(f"相机 {camera_id} 识别结果: {results}")
                         self.send_results(camera_id, preds)
                 except Empty:
