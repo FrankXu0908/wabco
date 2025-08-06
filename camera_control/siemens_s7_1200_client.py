@@ -69,6 +69,7 @@ class SiemensS71200Client:
         self.plc_db = 79
         self.running = False
         self.callback = None
+        self._stop_monitoring = threading.Event()
         
         # 初始化Snap7客户端
         self.plc_client = snap7.client.Client()
@@ -78,14 +79,13 @@ class SiemensS71200Client:
         self.connection_lock = threading.Lock()
         
         # 设置日志记录
-        self.setup_logging()
+        self.logger = logging.getLogger(self.__class__.__name__)
+        # self.setup_logging()
         
         # 数据缓存
         self.data_cache = {}
         self.last_update_time = None
         
-        self.logger.info(f"西门子S7-1200客户端初始化完成")
-        self.logger.info(f"目标PLC: {plc_ip_address}, 机架: {plc_rack}, 插槽: {plc_slot}")
 
     def setup_logging(self):
         """设置日志记录配置"""
@@ -702,9 +702,8 @@ class SiemensS71200Client:
         """
         self.logger.info(f"开始PLC监控，间隔: {interval}秒")      
         start_time = time.time()     
-        self.running = True
         try:
-            while self.running:
+            while not self._stop_monitoring.is_set():
                 # 获取触发位状态
                 data = self.read_data_block(self.plc_db, 0, 1)
                 trigger_bit_left = get_bool(data, 0, 0)
@@ -713,7 +712,7 @@ class SiemensS71200Client:
                 trigger_bit = trigger_bit_left or trigger_bit_right or trigger_bit_side
                 if trigger_bit:
                     trigger_info = (trigger_bit_left, trigger_bit_right, trigger_bit_side)
-                    self.logger.info(f"触发位状态: {trigger_bit}, 左: {trigger_bit_left}, 右: {trigger_bit_right}, 侧面: {trigger_bit_side}，开始拍照")
+                    self.logger.info(f"触发位状态: 左: {trigger_bit_left}, 右: {trigger_bit_right}, 侧面: {trigger_bit_side}，开始拍照")
                     if self.callback:
                         self.callback(trigger_info)  # invoke the callback with signal info
 
@@ -739,7 +738,8 @@ class SiemensS71200Client:
             self.logger.error(f"监控过程中发生错误: {str(e)}")
 
     def stop_monitoring(self):
-        self.running = False
+        self._stop_monitoring.set()
+        self.logger.info("已停止PLC监控")
     
     def register_callback(self, callback_fn):
         self.callback = callback_fn

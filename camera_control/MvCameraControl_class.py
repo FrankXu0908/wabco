@@ -4,6 +4,7 @@ import sys
 import copy
 import ctypes
 import os
+from pathlib import Path
 
 from ctypes import *
 
@@ -12,12 +13,18 @@ from CameraParams_const import *
 from CameraParams_header import *
 from MvErrorDefine_const import *
 
+# # 可能的驱动路径列表（同时支持 Windows 和容器内路径）
+# possible_driver_paths = [
+#     Path("/camera_driver"),                # 容器内挂载路径
+#     Path("C:/Camera/Driver"),              # Windows 原生路径
+#     Path(os.getenv("CAMERA_DRIVER_PATH"))  # 通过环境变量传递
+# ]
+
 # Python3.8版本修改Dll加载策略, 默认不再搜索Path环境变量, 同时增加winmode参数以兼容旧版本
 dllname = "MvCameraControl.dll"
 MvCamCtrldll = WinDLL("C:\\Program Files (x86)\\Common Files\\MVS\\Runtime\\Win64_x64\\MvCameraControl.dll")
 # C:\Program Files (x86)\Common Files\MVS\Runtime\Win64_x64
 dllname = WinDLL("C:\\Program Files (x86)\\Common Files\\MVS\Runtime\\Win64_x64\\MvCameraControl.dll")
-dllname = WinDLL("C:\Program Files (x86)\Common Files\MVS\Runtime\Win64_x64\MvCameraControl.dll")
 dll_path = r"C:\Program Files (x86)\Common Files\MVS\Runtime\Win64_x64\MvCameraControl.dll"
 dllname = "C:\\Program Files (x86)\\Common Files\\MVS\Runtime\\Win64_x64\\MvCameraControl.dll"
 os.add_dll_directory(dllname)

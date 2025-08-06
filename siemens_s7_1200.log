@@ -1,0 +1,185 @@
+2025-07-19 15:44:38,135 - SiemensS71200 - INFO - 西门子S7-1200客户端初始化完成
+2025-07-19 15:44:38,136 - SiemensS71200 - INFO - 目标PLC: 192.168.3.100, 机架: 0, 插槽: 1
+2025-07-19 15:44:38,136 - SiemensS71200 - INFO - 正在连接到PLC: 192.168.3.100
+2025-07-19 15:44:38,136 - SiemensS71200 - WARNING - 未能设置连接超时，将使用默认值
+2025-07-19 15:44:38,197 - SiemensS71200 - INFO - PLC连接成功!
+2025-07-19 15:44:38,207 - SiemensS71200 - INFO - CPU详细信息不可访问，使用基本信息
+2025-07-19 15:44:38,207 - SiemensS71200 - INFO - PLC信息: {'PLC地址': '192.168.3.100', '连接状态': '已连接', '连接时间': '2025-07-19 15:44:38', 'PLC型号': 'S7-1212C DC/DC/RLY', '说明': 'PLC连接正常，基本功能可用'}
+2025-07-19 15:44:38,209 - SiemensS71200 - INFO - Callback function registered.
+2025-07-19 15:44:38,210 - SiemensS71200 - INFO - 开始PLC监控，间隔: 0.3秒
+2025-07-19 15:44:38,318 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:44:39,980 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:44:40,995 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:44:42,011 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:44:43,030 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:44:44,043 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:44:45,056 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:44:46,070 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:44:47,086 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:44:48,100 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:44:49,114 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:44:50,129 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:44:51,146 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:44:52,162 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:44:53,171 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:44:54,190 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:44:55,205 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:44:56,221 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:44:57,233 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:44:58,250 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:44:59,264 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:45:00,278 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:45:01,296 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:45:02,311 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:45:03,326 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:45:04,340 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:45:05,355 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:45:06,370 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:45:08,005 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:45:09,021 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:45:10,035 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:45:11,048 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:45:12,061 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:45:13,074 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:45:14,092 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:45:15,107 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:45:16,124 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:45:17,137 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:45:18,151 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:45:19,168 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:45:20,186 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:21,304 - SiemensS71200 - INFO - 西门子S7-1200客户端初始化完成
+2025-07-19 15:57:21,304 - SiemensS71200 - INFO - 目标PLC: 192.168.3.100, 机架: 0, 插槽: 1
+2025-07-19 15:57:21,305 - SiemensS71200 - INFO - 正在连接到PLC: 192.168.3.100
+2025-07-19 15:57:21,305 - SiemensS71200 - WARNING - 未能设置连接超时，将使用默认值
+2025-07-19 15:57:21,365 - SiemensS71200 - INFO - PLC连接成功!
+2025-07-19 15:57:21,377 - SiemensS71200 - INFO - CPU详细信息不可访问，使用基本信息
+2025-07-19 15:57:21,378 - SiemensS71200 - INFO - PLC信息: {'PLC地址': '192.168.3.100', '连接状态': '已连接', '连接时间': '2025-07-19 15:57:21', 'PLC型号': 'S7-1212C DC/DC/RLY', '说明': 'PLC连接正常，基本功能可用'}
+2025-07-19 15:57:21,380 - SiemensS71200 - INFO - Callback function registered.
+2025-07-19 15:57:21,382 - SiemensS71200 - INFO - 开始PLC监控，间隔: 0.3秒
+2025-07-19 15:57:22,094 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:24,061 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:25,079 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:26,095 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:27,110 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:28,126 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:29,141 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:30,157 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:31,174 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:32,187 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:33,203 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:34,218 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:35,232 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:36,248 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:37,260 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:38,280 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:39,294 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:40,309 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:41,324 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:42,338 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:43,351 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:44,365 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:45,382 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:47,015 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:48,029 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:49,043 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:50,061 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:51,072 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:52,085 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:53,098 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:54,112 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:55,128 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:56,144 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:57,159 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 15:57:58,175 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:01:21,387 - SiemensS71200 - INFO - 西门子S7-1200客户端初始化完成
+2025-07-19 16:01:21,387 - SiemensS71200 - INFO - 目标PLC: 192.168.3.100, 机架: 0, 插槽: 1
+2025-07-19 16:01:21,387 - SiemensS71200 - INFO - 正在连接到PLC: 192.168.3.100
+2025-07-19 16:01:21,387 - SiemensS71200 - WARNING - 未能设置连接超时，将使用默认值
+2025-07-19 16:01:21,451 - SiemensS71200 - INFO - PLC连接成功!
+2025-07-19 16:01:21,460 - SiemensS71200 - INFO - CPU详细信息不可访问，使用基本信息
+2025-07-19 16:01:21,462 - SiemensS71200 - INFO - PLC信息: {'PLC地址': '192.168.3.100', '连接状态': '已连接', '连接时间': '2025-07-19 16:01:21', 'PLC型号': 'S7-1212C DC/DC/RLY', '说明': 'PLC连接正常，基本功能可用'}
+2025-07-19 16:01:21,463 - SiemensS71200 - INFO - Callback function registered.
+2025-07-19 16:01:21,465 - SiemensS71200 - INFO - 开始PLC监控，间隔: 0.3秒
+2025-07-19 16:01:22,186 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:01:23,202 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:01:24,215 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:01:25,231 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:01:26,248 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:01:27,262 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:01:28,276 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:16:46,508 - SiemensS71200 - INFO - 西门子S7-1200客户端初始化完成
+2025-07-19 16:16:46,508 - SiemensS71200 - INFO - 目标PLC: 192.168.3.100, 机架: 0, 插槽: 1
+2025-07-19 16:16:46,509 - SiemensS71200 - INFO - 正在连接到PLC: 192.168.3.100
+2025-07-19 16:16:46,509 - SiemensS71200 - WARNING - 未能设置连接超时，将使用默认值
+2025-07-19 16:16:46,570 - SiemensS71200 - INFO - PLC连接成功!
+2025-07-19 16:16:46,584 - SiemensS71200 - INFO - CPU详细信息不可访问，使用基本信息
+2025-07-19 16:16:46,585 - SiemensS71200 - INFO - PLC信息: {'PLC地址': '192.168.3.100', '连接状态': '已连接', '连接时间': '2025-07-19 16:16:46', 'PLC型号': 'S7-1212C DC/DC/RLY', '说明': 'PLC连接正常，基本功能可用'}
+2025-07-19 16:16:46,587 - SiemensS71200 - INFO - Callback function registered.
+2025-07-19 16:16:46,589 - SiemensS71200 - INFO - 开始PLC监控，间隔: 0.3秒
+2025-07-19 16:16:47,002 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:16:48,041 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:16:49,054 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:16:50,070 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:16:51,086 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:16:52,098 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:16:53,113 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:16:54,128 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:16:55,143 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:16:56,160 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:16:57,177 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:19:53,193 - SiemensS71200 - INFO - 西门子S7-1200客户端初始化完成
+2025-07-19 16:19:53,194 - SiemensS71200 - INFO - 目标PLC: 192.168.3.100, 机架: 0, 插槽: 1
+2025-07-19 16:19:53,194 - SiemensS71200 - INFO - 正在连接到PLC: 192.168.3.100
+2025-07-19 16:19:53,194 - SiemensS71200 - WARNING - 未能设置连接超时，将使用默认值
+2025-07-19 16:19:53,257 - SiemensS71200 - INFO - PLC连接成功!
+2025-07-19 16:19:53,269 - SiemensS71200 - INFO - CPU详细信息不可访问，使用基本信息
+2025-07-19 16:19:53,270 - SiemensS71200 - INFO - PLC信息: {'PLC地址': '192.168.3.100', '连接状态': '已连接', '连接时间': '2025-07-19 16:19:53', 'PLC型号': 'S7-1212C DC/DC/RLY', '说明': 'PLC连接正常，基本功能可用'}
+2025-07-19 16:19:53,271 - SiemensS71200 - INFO - Callback function registered.
+2025-07-19 16:19:53,273 - SiemensS71200 - INFO - 开始PLC监控，间隔: 0.3秒
+2025-07-19 16:19:53,369 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:19:55,031 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:19:56,045 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:19:57,059 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:19:58,072 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:19:59,086 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:20:00,100 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:20:01,115 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:20:02,130 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:20:03,143 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:20:04,157 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:20:05,172 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:20:06,189 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:20:07,203 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:20:08,216 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:20:09,231 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:20:10,245 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:20:11,262 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:20:12,278 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:20:13,293 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:20:14,311 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:20:15,323 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:20:16,338 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:20:17,356 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:24:08,754 - SiemensS71200 - INFO - 西门子S7-1200客户端初始化完成
+2025-07-19 16:24:08,754 - SiemensS71200 - INFO - 目标PLC: 192.168.3.100, 机架: 0, 插槽: 1
+2025-07-19 16:24:08,754 - SiemensS71200 - INFO - 正在连接到PLC: 192.168.3.100
+2025-07-19 16:24:08,755 - SiemensS71200 - WARNING - 未能设置连接超时，将使用默认值
+2025-07-19 16:24:08,815 - SiemensS71200 - INFO - PLC连接成功!
+2025-07-19 16:24:08,828 - SiemensS71200 - INFO - CPU详细信息不可访问，使用基本信息
+2025-07-19 16:24:08,830 - SiemensS71200 - INFO - PLC信息: {'PLC地址': '192.168.3.100', '连接状态': '已连接', '连接时间': '2025-07-19 16:24:08', 'PLC型号': 'S7-1212C DC/DC/RLY', '说明': 'PLC连接正常，基本功能可用'}
+2025-07-19 16:24:08,831 - SiemensS71200 - INFO - Callback function registered.
+2025-07-19 16:24:08,832 - SiemensS71200 - INFO - 开始PLC监控，间隔: 0.3秒
+2025-07-19 16:24:08,923 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:24:09,965 - SiemensS71200 - INFO - 已停止PLC监控
+2025-07-19 16:26:36,506 - SiemensS71200 - INFO - 西门子S7-1200客户端初始化完成
+2025-07-19 16:26:36,506 - SiemensS71200 - INFO - 目标PLC: 192.168.3.100, 机架: 0, 插槽: 1
+2025-07-19 16:26:36,507 - SiemensS71200 - INFO - 正在连接到PLC: 192.168.3.100
+2025-07-19 16:26:36,507 - SiemensS71200 - WARNING - 未能设置连接超时，将使用默认值
+2025-07-19 16:26:36,570 - SiemensS71200 - INFO - PLC连接成功!
+2025-07-19 16:26:36,582 - SiemensS71200 - INFO - CPU详细信息不可访问，使用基本信息
+2025-07-19 16:26:36,583 - SiemensS71200 - INFO - PLC信息: {'PLC地址': '192.168.3.100', '连接状态': '已连接', '连接时间': '2025-07-19 16:26:36', 'PLC型号': 'S7-1212C DC/DC/RLY', '说明': 'PLC连接正常，基本功能可用'}
+2025-07-19 16:26:36,585 - SiemensS71200 - INFO - Callback function registered.
+2025-07-19 16:26:36,587 - SiemensS71200 - INFO - 开始PLC监控，间隔: 0.3秒
+2025-07-19 16:26:37,011 - SiemensS71200 - INFO - 触发位状态: True, 左: True, 右: False, 侧面: False，开始拍照
+2025-07-19 16:26:38,052 - SiemensS71200 - INFO - 已停止PLC监控

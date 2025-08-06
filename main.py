@@ -24,6 +24,7 @@ class CameraThread(threading.Thread):
         self.trigger_event = trigger_event  # PLC触发事件
         self.stop_event = stop_event  # 停止线程事件
         self.camera = None             # 相机管理器
+        self.camera_status = "未初始化"  # 相机状态
         self.last_capture_time = None
         self.plc = None                     # PLC 客户端
         self.plc_ip = "192.168.3.100"      # PLC的IP地址
@@ -61,33 +62,41 @@ class CameraThread(threading.Thread):
             frames = self.camera.capture_and_return(camera_id)
             self.image_queue.put((camera_id, frames))  # 将图像数据放入队列
 
-    def send_results(self, preds):
+    def send_results(self, camera_id, preds):
         # 将结果写入PLC (示例: DB1.DBB4-DBB6)
         result_bytes = bytearray([preds[0], preds[1], preds[2], preds[3], preds[4], preds[5]])
-        self.plc.write_data_block(self.plc_db, 4, result_bytes)
+        if camera_id == 0:
+            self.plc.write_data_block(self.plc_db, 7, result_bytes)
+        if camera_id == 1:
+            self.plc.write_data_block(self.plc_db, 8, result_bytes)
+        if camera_id == 2:
+            self.plc.write_data_block(self.plc_db, 9, result_bytes)
+            
 
     def run(self):
         try:
             # 1. 获取相机实例并且初始化
             self.camera = MultiCameraManager() 
             self.camera.initialize_all_cameras()
+            self.camera_status = "相机已初始化, 准备就绪"
             # 2. 连接 PLC并开始监测，返回画框到照片队列
             self.plc = SiemensS71200Client(self.plc_ip, self.plc_rack, self.plc_slot)
             if not self.plc.connect_to_plc():
                 self.logger.info("PLC连接失败")
                 return
             self.plc.register_callback(self.handle_trigger)
-            monitor_and_capture_thread = threading.Thread(target=self.plc.start_monitoring, kwargs={'interval': 0.3})
+            monitor_and_capture_thread = threading.Thread(target=self.plc.start_monitoring, kwargs={'interval': 1}, daemon=True)
             monitor_and_capture_thread.start()
             # Main loop to process frames
             self.classifier = DefectClassifier()  # 初始化分类器
             while not self.stop_event.is_set():     
                 try:
                     camera_id, frames = self.image_queue.get(timeout=0.5)
+                    self.last_capture_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     if frames is not None:
                         results, preds = self.classifier.classify(frames, camera_id)
                         self.logger.info(f"相机 {camera_id} 识别结果: {results}")
-                        self.send_results(preds)
+                        self.send_results(camera_id, preds)
                 except Empty:
                         continue  # go back to waiting for next image
                 time.sleep(0.5)
@@ -100,107 +109,163 @@ class CameraThread(threading.Thread):
                 self.camera.close_all_cameras()
             self.logger.info("相机线程停止")
 
-def create_gradio_interface(log_queue):
-    with gr.Blocks(title="PLC相机控制系统") as demo:
-        # 状态显示区域
-        with gr.Row():
-            camera_status = gr.Textbox(label="相机状态", interactive=False)
-            last_capture = gr.Textbox(label="最后拍摄时间", interactive=False)
-            results_display = gr.JSON(label="识别结果")
+class GradioUI:
+
+    def __init__(self, log_queue, ui_log_queue):
+        self.log_queue = log_queue
+        self.ui_log_queue = ui_log_queue
+        self.camera_thread = None
+        self.camera_status = "未初始化"
+        self.last_capture_time = "未拍摄"
+        self.results = {}
+        self.ui_logs = []  # 用于存储日志信息
+        self.log_lock = threading.Lock()  # <-- add this lock
+        self._configure_logging()
+    
+    def _configure_logging(self):
+        root_logger = logging.getLogger()
+        root_logger.setLevel(logging.INFO)
         
-        # 日志显示区域
-        log_output = gr.Textbox(label="系统日志", lines=15, interactive=False)
+        formatter = logging.Formatter('%(asctime)s - %(threadName)s - %(levelname)s - %(name)s: %(message)s')
+
+        # Terminal log via Queue
+        queue_handler = QueueHandler(self.log_queue)
+        queue_handler.setFormatter(formatter)
+        root_logger.addHandler(queue_handler)
+
+        # UI log handler
+        ui_log_handler = UILogHandler(self.ui_logs, self.log_lock)
+        ui_log_handler.setFormatter(formatter)
+        root_logger.addHandler(ui_log_handler)
+
+        # Terminal output
+        stream_handler = logging.StreamHandler()
+        stream_handler.setFormatter(formatter)
+
+        self.queue_listener = QueueListener(self.log_queue, stream_handler)
+        self.queue_listener.start()
         
-        # 控制按钮
-        with gr.Row():
-            start_btn = gr.Button("启动系统")
-            stop_btn = gr.Button("停止系统")
-            manual_trigger = gr.Button("手动触发")
+    
+    def get_logs(self):
+        with self.log_lock:
+            return "\n".join(self.ui_logs[-100:])    
+    
+    def get_status(self):
+        return self.camera_status
+    
+    def start_camera_thread(self):
+        if self.camera_thread is None or not self.camera_thread.is_alive():
+            # Create fresh thread and events
+            self.trigger_event = threading.Event()
+            self.stop_event = threading.Event()
+            self.camera_thread = CameraThread(self.trigger_event, self.stop_event)
+            self.camera_thread.daemon = True
+            self.camera_thread.start()
+            return "相机线程已启动"
+        return "相机线程已经在运行"
+
+    def stop_camera_thread(self):
+        if self.camera_thread and self.camera_thread.is_alive():
+            self.stop_event.set()
+            self.camera_thread.join(timeout=2.0)
+            if self.camera_thread.is_alive():
+                return "相机线程未能及时停止"
+            self.camera_thread = None  # Allow re-creation
+            return "相机线程已停止"
+        return "相机线程未在运行"
             
-        # 实时更新日志的函数
-        def update_log():
-            while True:
-                if not log_queue.empty():
-                    yield log_queue.get()
-                else:
-                    yield None
-                    time.sleep(0.1)
-        
-        # 组件事件绑定
-        demo.load(
-            fn=lambda: {"相机状态": "待机", "最后拍摄时间": "未拍摄"},
-            outputs=[camera_status, last_capture]
-        )
-        
-        log_output.change(
-            fn=update_log,
-            inputs=[],
-            outputs=log_output,
-            every=0.1
-        )
-        
-    return demo
+    def create_gradio_interface(self):
+        with gr.Blocks(title="PLC相机控制系统") as demo:
+            # 状态显示区域
+            with gr.Row():
+                camera_status = gr.Textbox(label="相机状态", interactive=False)
+                
+            refresh_btn = gr.Button("刷新状态")
+            refresh_btn.click(
+                fn=self.get_status,
+                inputs=[],
+                outputs=[camera_status]
+            )
+            
+            # 日志显示区域
+            log_output = gr.Textbox(label="系统日志", lines=15, interactive=False)
+            refresh_logs_btn = gr.Button("刷新日志")
+            refresh_logs_btn.click(
+                fn=self.get_logs,
+                inputs=[],
+                outputs=log_output
+            )
+            # Timer for logs
+            log_timer = gr.Timer(
+                value=1,  # 每秒刷新一次
+                active=True,
+                render=True
+            )
+            log_timer.tick(
+                fn=self.get_logs,
+                inputs=[],
+                outputs=log_output
+            )
 
+            # 控制按钮
+            with gr.Row():
+                start_btn = gr.Button("启动系统")
+                stop_btn = gr.Button("停止系统")
+                manual_trigger = gr.Button("手动触发(测试中)")
+                start_btn.click(fn=self.start_camera_thread, inputs=[], outputs=[camera_status])
+                stop_btn.click(fn=self.stop_camera_thread, inputs=[], outputs=[camera_status])
+                # manual_trigger.click(fn=self.trigger_camera_capture, inputs=[], outputs=[camera_status])
+
+            # 组件事件绑定
+            demo.load(
+                    fn=self.get_status,
+                    inputs=[],
+                    outputs=[camera_status]
+                )
+            
+            # demo.load(self.get_logs, inputs=[], outputs=log_output)
         
+            return demo
+
+
+class UILogHandler(logging.Handler):
+    def __init__(self, ui_logs, log_lock):
+        super().__init__()
+        self.ui_logs = ui_logs
+        self.log_lock = log_lock
+
+    def emit(self, record):
+        log_entry = self.format(record)
+        with self.log_lock:
+            self.ui_logs.append(log_entry)
+
 def main():
-    # Step 1: Create the shared queue
+    # Create the shared queue
     log_queue = Queue()
-
-    # Step 2: Configure the root logger
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.INFO)
-
-    # Step 3: Terminal output handler
-    stream_handler = logging.StreamHandler()
-    formatter = logging.Formatter('%(asctime)s - %(threadName)s - %(levelname)s - %(name)s: %(message)s')
-    stream_handler.setFormatter(formatter)
-    root_logger.addHandler(stream_handler)
-
-    # Step 4: Queue handler for in-memory queue (for Gradio)
-    queue_handler = QueueHandler(log_queue)
-    queue_handler.setFormatter(formatter)
-    root_logger.addHandler(queue_handler)
-    
-    # Step 5: Start a QueueListener to consume logs from the queue
-    # This listener can dispatch to custom functions or GUI updates
-    def handle_log_record(record):
-        # This is where you can push to Gradio output or store logs
-        msg = formatter.format(record)
-        # Example: append to a global list
-        ui_logs.append(msg)
-
-    ui_logs = []  # holds logs for Gradio display
-
-    queue_listener = QueueListener(log_queue, stream_handler)  # Can add more handlers
-    queue_listener.start()
-    # 创建线程间通信组件
-    trigger_event = threading.Event()
-    stop_event = threading.Event()
-    
-    # 创建相机线程
-    camera_thread = CameraThread(trigger_event, stop_event)
-    camera_thread.daemon = True
-    
-    # 创建Gradio界面
-    #demo = create_gradio_interface(log_queue)
-    
-    # 启动线程
-    camera_thread.start()
-    
-    # 启动Gradio界面
-    #demo.launch()
+    ui_log_queue = Queue()
+ 
+    # Initialize UI
+    ui = GradioUI(log_queue, ui_log_queue)
     
     #主线程
     try:
-        while not stop_event.is_set():
-            time.sleep(1)
+        # 打开GUI
+        demo = ui.create_gradio_interface()
+        demo.launch()
+        
     except KeyboardInterrupt:
-        stop_event.set()
-        camera_thread.join(timeout=2.0)
-        if camera_thread.is_alive():
-            logging.warning("警告: 相机线程未及时停止！")
+        print("KeyboardInterrupt received: stopping all services.")
+    finally:
+        # # 停止相机线程
+        # stop_event.set()
+        # camera_thread.join(timeout=2.0)
+        # if camera_thread.is_alive():
+        #     logging.warning("警告: 相机线程未及时停止！")
+        if ui.queue_listener:
+            ui.queue_listener.stop()
         logging.info("主线程退出")
 
 
 if __name__ == "__main__":
-    main()
+    main() 
+    
