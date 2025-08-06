@@ -25,30 +25,44 @@ class MultiCameraManager:
                 0: {
                     "name": "Camera 1",
                     "channels": 0,
-                    "camera_sn": "DA6426319",
+                    "camera_sn": "DA6547741",
                     "params": {
-                        "exposure": 2000.0,
+                        "exposure": 80000.0,
                         "gain_value": 0,
                         "offset_y": 0,
                         "process": "left",
                         "width": 2448,
-                        "height":2048,  
+                        "height":1536,  
                         }
                     },
                 1: {
                     "name": "Camera 2",
                     "channels": 1 ,
+                    "camera_sn": "DA6426319",
+                    "params": {
+                            "exposure": 75000.0,
+                            "gain_value": 0,
+                            "offset_y": 0,
+                            "process": "right",  
+                            "width": 2448,
+                            "height":1536,  
+                        }
+                    },
+                2: {
+                    "name": "Camera 3",
+                    "channels": 2 ,
                     "camera_sn": "DA6426332",
                     "params": {
                             "exposure": 2000.0,
                             "gain_value": 0,
                             "offset_y": 0,
-                            "process": "right",  
+                            "process": "side",  
                             "width": 2448,
-                            "height":2048,  
-                    }
+                            "height":2048, 
+                    
                 }
-            }
+                
+            }}
         self.logger = logging.getLogger("MultiCameraManager")
         self.last_signal_states = {}
         for cam_id in self.config.keys():
@@ -402,9 +416,10 @@ class MultiCameraManager:
                         # 返回处理后的图像数据
                         crops = [temp for _ in range(6)]
                         return crops
-
                 except Exception as e:
                     print(f"处理和保存图像时发生错误: {str(e)}")
+            else:
+                print("No image is detected")
 
         except Exception as e:
             print(f"拍照过程中发生错误: {str(e)}")
